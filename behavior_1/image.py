@@ -41,13 +41,15 @@ def getMedianHeight(conts):
 gamestate = [["-", "-", "-"], ["-", "-", "-"], ["-", "-", "-"]]
 
 MARGIN = 5
+numBoardTiles = 9
 
 # kernel used for noise removal
 kernel = np.ones((7, 7), np.uint8)
 # Load a color image
 
 IM_DIR = "C:/Users/LaneSimpson/Documents/GitHub/oc-Master/NAO-TicTacToe/behavior_1/"
-img = cv2.resize(cv2.imread(IM_DIR + "image2.jpg"),
+IM_NAME = "image2.jpg"
+img = cv2.resize(cv2.imread(IM_DIR + IM_NAME),
 				 (640, 480), interpolation=cv2.INTER_AREA)
 
 
@@ -102,7 +104,7 @@ contours, hierarchy = cv2.findContours(
 	bwCropped, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 # Clean out extra contours
-while len(contours) > 9:
+while len(contours) > numBoardTiles:
 	# Find the furthest width from the median and the bounding rect of that width
 	contours.sort(key=getWidth)
 	medianWidth = getMedianWidth(contours)
@@ -148,8 +150,7 @@ for ct in contours:
 	x = x + 1
 	y = y + 1
 
-# cv2.drawContours(colorCroppped, contours, -1, (0,255,0), 15)
-cv2.imwrite(IM_DIR + "post.jpg", img)
+cv2.imwrite(IM_DIR + "outers.jpg", img)
 
 # ======================================================
 # ======================================================
@@ -159,67 +160,63 @@ cv2.imwrite(IM_DIR + "post.jpg", img)
 
 
 # get the image width and height
-img_width = img.shape[1]
-img_height = img.shape[0]
+img_width = colorCroppped.shape[1]
+img_height = colorCroppped.shape[0]
+imgCopy = cv2.resize(cv2.imread(IM_DIR + IM_NAME),
+				 (640, 480), interpolation=cv2.INTER_AREA)
+imgCopyCropped = imgCopy[y1+MARGIN:y1+h1-MARGIN, x1+MARGIN:x1+w1-MARGIN]
 
-# tileCount = 0
-# #print(len(contours))
-# for cnt in contours:
-	# print('iteration')
-	# # ignore small contours that are not tiles
-	# if cv2.contourArea(cnt) > 20000:
-		# tileCount = tileCount+1
-		# # use boundingrect to get coordinates of tile
-		# x,y,w,h = cv2.boundingRect(cnt)
-		# #print(cv2.boundingRect(cnt))
-		# # create new image from binary, for further analysis. Trim off the edge that has a line
-		# tile = thresh1[y+MARGIN:y+h-MARGIN*2,x+MARGIN:x+w-MARGIN*2]
-		# # create new image from main image, so we can draw the contours easily
-		# imgTile = img[y+MARGIN:y+h-MARGIN*2,x+MARGIN:x+w-MARGIN*2]
+tileCount = 0
+print("finding symbols in tiles")
+for cnt in contours:
+	print('iteration')
+	tileCount = tileCount+1
+	# use boundingrect to get coordinates of tile
+	x,y,w,h = cv2.boundingRect(cnt)
+	tileArea = cv2.contourArea(cnt)
+	# create new image from binary, for further analysis. Trim off the edge that has a line
+	tile = bwCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
+	# create new image from main image, so we can draw the contours easily
+	imgTile = colorCroppped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
 
-		# #print(x, "  ", y)
-		# #determine the array indexes of the tile
-		# tileX = int(round(((x+40)/img_width)*3))
-		# tileY = int(round(((y+40)/img_height)*3))
-		# #print(tileX, "  ", tileY)
+	#determine the array indexes of the tile
+	tileX = int(round(((x+40)/img_width)*3))
+	tileY = int(round(((y+40)/img_height)*3))
+	# print(x, "  ", y)
+	# print(tileX, "  ", tileY)
 
-		# if tileX >= 0 and tileX < 3 and tileY >= 0 and tileY < 3:
-			# # find contours in the tile image. RETR_TREE retrieves all of the contours and reconstructs a full hierarchy of nested contours.
-			# c, hierarchy = cv2.findContours(tile, cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
-			# for ct in c:
-				# print('inner iteration')
-				# # to prevent the tile finding itself as contour
-				# if cv2.contourArea(ct) < cv2.contourArea(cnt) - 14000:
-					# #print(cv2.boundingRect(ct))
-					# cv2.drawContours(imgTile, [ct], -1, (255,0+tileX*127,0+tileY*127), 15)
-					# #calculate the solitity
-					# area = cv2.contourArea(ct)
-					# hull = cv2.convexHull(ct)
-					# hull_area = cv2.contourArea(hull)
-					# if(hull_area != 0):
-						# solidity = float(area)/hull_area
-					# else:
-						# solidity = 1
+	if tileX >= 0 and tileX < 3 and tileY >= 0 and tileY < 3:
+		# find contours in the tile image. RETR_TREE retrieves all of the contours and reconstructs a full hierarchy of nested contours.
+		c, hierarchy = cv2.findContours(tile, cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
+		for ct in c:
+			print('inner iteration')
+			# to prevent the tile finding itself as contour
+			if cv2.contourArea(ct) < tileArea * 0.90:
+				imgCopyTile = imgCopyCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
+				cv2.drawContours(imgCopyTile, [ct], -1, (255,0+tileX*127,0+tileY*127), 15)
+				#calculate the solitity
+				area = cv2.contourArea(ct)
+				hull = cv2.convexHull(ct)
+				hull_area = cv2.contourArea(hull)
+				if(hull_area != 0):
+					solidity = float(area)/hull_area
+				else:
+					solidity = 1
 
-					# # fill the gamestate with the right sign
-					# if(solidity > 0.7):
-				
-						# gamestate[tileX][tileY] = "O"
-					# else:
-						# gamestate[tileX][tileY] = "X"
-		# # put a number in the tile
-		# cv2.putText(img, str(tileCount), (x+20,y+30), cv2.FONT_HERSHEY_SIMPLEX, 5, (0,0,255), 5)
-# #print the gamestate
-# print("Gamestate:")
-# for line in gamestate:
-	# linetxt = ""
-	# for cel in line:
-		# linetxt = linetxt + "|" + cel
-	# print(linetxt)
+				# fill the gamestate with the right sign
+				if(solidity > 0.7):
 
+					gamestate[tileX][tileY] = "O"
+				else:
+					gamestate[tileX][tileY] = "X"
+	else:
+		print("tile out of bounds:", tileX, tileY)
+#print the gamestate
+print("Gamestate:")
+for line in gamestate:
+	linetxt = ""
+	for cel in line:
+		linetxt = linetxt + "|" + cel
+	print(linetxt)
 
-#res = cv2.resize(img,None,fx=0.2, fy=0.2, interpolation = cv2.INTER_CUBIC)
-#print(type(img))
-
-# wasSuccessful = cv2.imwrite("C:/Users/mspri/Desktop/OC/post.jpg", img)
-# print("%r" % wasSuccessful)
+cv2.imwrite(IM_DIR + "inners.jpg", imgCopy)
