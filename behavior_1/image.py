@@ -189,26 +189,32 @@ for cnt in contours:
 		# find contours in the tile image. RETR_TREE retrieves all of the contours and reconstructs a full hierarchy of nested contours.
 		c, hierarchy = cv2.findContours(tile, cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
 		for ct in c:
-			print('inner iteration')
 			# to prevent the tile finding itself as contour
 			if cv2.contourArea(ct) < tileArea * 0.90:
 				imgCopyTile = imgCopyCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
-				cv2.drawContours(imgCopyTile, [ct], -1, (255,0+tileX*127,0+tileY*127), 15)
-				#calculate the solitity
-				area = cv2.contourArea(ct)
-				hull = cv2.convexHull(ct)
-				hull_area = cv2.contourArea(hull)
-				if(hull_area != 0):
-					solidity = float(area)/hull_area
-				else:
-					solidity = 1
+				number_of_white_pix = np.sum(tile == 255)
+				number_of_black_pix = np.sum(tile == 0)
+				print(tileX, tileY)
+				print('Number of white pixels:', number_of_white_pix)
+				print('Number of black pixels:', number_of_black_pix)
+				# the area needs to be at least 5% black in order to be legit
+				if (number_of_black_pix/number_of_white_pix > 0.05):
+					cv2.drawContours(imgCopyTile, [ct], -1, (255,0+tileX*127,0+tileY*127), 15)
+					#calculate the solitity
+					area = cv2.contourArea(ct)
+					hull = cv2.convexHull(ct)
+					hull_area = cv2.contourArea(hull)
+					if(hull_area != 0):
+						solidity = float(area)/hull_area
+					else:
+						solidity = 1
 
-				# fill the gamestate with the right sign
-				if(solidity > 0.7):
+					# fill the gamestate with the right sign
+					if(solidity > 0.7):
 
-					gamestate[tileX][tileY] = "O"
-				else:
-					gamestate[tileX][tileY] = "X"
+						gamestate[tileX][tileY] = "O"
+					else:
+						gamestate[tileX][tileY] = "X"
 	else:
 		print("tile out of bounds:", tileX, tileY)
 #print the gamestate
