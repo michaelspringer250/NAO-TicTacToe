@@ -48,7 +48,7 @@ kernel = np.ones((7, 7), np.uint8)
 # Load a color image
 
 IM_DIR = "C:/Users/LaneSimpson/Documents/GitHub/oc-Master/NAO-TicTacToe/behavior_1/"
-IM_NAME = "image2.jpg"
+IM_NAME = "image.jpg"
 img = cv2.resize(cv2.imread(IM_DIR + IM_NAME),
 				 (640, 480), interpolation=cv2.INTER_AREA)
 
@@ -154,7 +154,7 @@ cv2.imwrite(IM_DIR + "outers.jpg", img)
 
 # ======================================================
 # ======================================================
-# BELOW HERE HAS NOT BEEN UPDATED TO USE CROPPED IMAGE
+# FIND INNER CONTOURS IN EACH TILE
 # ======================================================
 # ======================================================
 
@@ -162,12 +162,13 @@ cv2.imwrite(IM_DIR + "outers.jpg", img)
 # get the image width and height
 img_width = colorCroppped.shape[1]
 img_height = colorCroppped.shape[0]
+# make a copy of the original image to draw the inner contours
 imgCopy = cv2.resize(cv2.imread(IM_DIR + IM_NAME),
 				 (640, 480), interpolation=cv2.INTER_AREA)
 imgCopyCropped = imgCopy[y1+MARGIN:y1+h1-MARGIN, x1+MARGIN:x1+w1-MARGIN]
 
 tileCount = 0
-print("finding symbols in tiles")
+print("finding contours in tiles")
 for cnt in contours:
 	print('iteration')
 	tileCount = tileCount+1
@@ -176,8 +177,8 @@ for cnt in contours:
 	tileArea = cv2.contourArea(cnt)
 	# create new image from binary, for further analysis. Trim off the edge that has a line
 	tile = bwCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
-	# create new image from main image, so we can draw the contours easily
-	imgTile = colorCroppped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
+	# create new image from the image copy, so we can draw the inner contours easily
+	imgCopyTile = imgCopyCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
 
 	#determine the array indexes of the tile
 	tileX = int(round(((x+40)/img_width)*3))
@@ -189,9 +190,9 @@ for cnt in contours:
 		# find contours in the tile image. RETR_TREE retrieves all of the contours and reconstructs a full hierarchy of nested contours.
 		c, hierarchy = cv2.findContours(tile, cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
 		for ct in c:
-			# to prevent the tile finding itself as contour
-			if cv2.contourArea(ct) < tileArea * 0.90:
-				imgCopyTile = imgCopyCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
+			# to prevent the tile finding itself as contour, and to ignore tiny contours
+			x2, y2, w2, h2 = cv2.boundingRect(ct)
+			if cv2.contourArea(ct) < tileArea * 0.90 and w2 > 0.1 * w and h2 > 0.1 * h:
 				number_of_white_pix = np.sum(tile == 255)
 				number_of_black_pix = np.sum(tile == 0)
 				print(tileX, tileY)
