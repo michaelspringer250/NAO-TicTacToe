@@ -48,9 +48,9 @@ kernel = np.ones((7, 7), np.uint8)
 # Load a color image
 
 IM_DIR = "C:/Users/LaneSimpson/Documents/GitHub/oc-Master/NAO-TicTacToe/behavior_1/"
-IM_NAME = "image.jpg"
+IM_NAME = "tictactoe.jpg"
 img = cv2.resize(cv2.imread(IM_DIR + IM_NAME),
-				 (640, 480), interpolation=cv2.INTER_AREA)
+				 (1280, 960), interpolation=cv2.INTER_AREA)
 
 
 # print(img_width, img_height)
@@ -61,6 +61,8 @@ img_g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 _, thresh1 = cv2.threshold(img_g, 127, 255, cv2.THRESH_BINARY)
 # remove noise from binary
 thresh1 = cv2.morphologyEx(thresh1, cv2.MORPH_OPEN, kernel)
+
+cv2.imwrite(IM_DIR + "binary.jpg", thresh1)
 
 
 # find and draw contours.
@@ -164,13 +166,12 @@ img_width = colorCroppped.shape[1]
 img_height = colorCroppped.shape[0]
 # make a copy of the original image to draw the inner contours
 imgCopy = cv2.resize(cv2.imread(IM_DIR + IM_NAME),
-				 (640, 480), interpolation=cv2.INTER_AREA)
+				 (1280, 960), interpolation=cv2.INTER_AREA)
 imgCopyCropped = imgCopy[y1+MARGIN:y1+h1-MARGIN, x1+MARGIN:x1+w1-MARGIN]
 
 tileCount = 0
 print("finding contours in tiles")
 for cnt in contours:
-	print('iteration')
 	tileCount = tileCount+1
 	# use boundingrect to get coordinates of tile
 	x,y,w,h = cv2.boundingRect(cnt)
@@ -181,8 +182,8 @@ for cnt in contours:
 	imgCopyTile = imgCopyCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
 
 	#determine the array indexes of the tile
-	tileX = int(round(((x+40)/img_width)*3))
-	tileY = int(round(((y+40)/img_height)*3))
+	tileX = int(round(((x)/img_width)*3))
+	tileY = int(round(((y)/img_height)*3))
 	# print(x, "  ", y)
 	# print(tileX, "  ", tileY)
 
@@ -192,9 +193,9 @@ for cnt in contours:
 		for ct in c:
 			# to prevent the tile finding itself as contour, and to ignore tiny contours
 			x2, y2, w2, h2 = cv2.boundingRect(ct)
-			if cv2.contourArea(ct) < tileArea * 0.90 and w2 > 0.1 * w and h2 > 0.1 * h:
-				number_of_white_pix = np.sum(tile == 255)
-				number_of_black_pix = np.sum(tile == 0)
+			if cv2.contourArea(ct) < tileArea * 0.70 and w2 > 0.2 * w and h2 > 0.2 * h:
+				number_of_white_pix = np.sum(tile[y2+MARGIN:y2+h2-MARGIN,x2+MARGIN:x2+w2-MARGIN] == 255)
+				number_of_black_pix = np.sum(tile[y2+MARGIN:y2+h2-MARGIN,x2+MARGIN:x2+w2-MARGIN] == 0)
 				print(tileX, tileY)
 				print('Number of white pixels:', number_of_white_pix)
 				print('Number of black pixels:', number_of_black_pix)
@@ -210,12 +211,13 @@ for cnt in contours:
 					else:
 						solidity = 1
 
-					# fill the gamestate with the right sign
-					if(solidity > 0.7):
+					print('Solidity', solidity)
 
-						gamestate[tileX][tileY] = "O"
+					# fill the gamestate with the right sign
+					if(solidity > 0.5):
+						gamestate[tileY][tileX] = "O"
 					else:
-						gamestate[tileX][tileY] = "X"
+						gamestate[tileY][tileX] = "X"
 	else:
 		print("tile out of bounds:", tileX, tileY)
 #print the gamestate
