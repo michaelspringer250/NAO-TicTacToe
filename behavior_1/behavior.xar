@@ -74,6 +74,11 @@ class MyClass(GeneratedClass):
 import cv2
 
 class MyClass(GeneratedClass):
+    logcount = 0
+    def logAThing(self, s):
+        self.logger.info(str(self.logcount)+": "+str(s))
+        self.logcount+=1
+
     def __init__(self):
         GeneratedClass.__init__(self)
 
@@ -151,9 +156,9 @@ class MyClass(GeneratedClass):
         secondLargestContour = 0
         i = 0
         for ct in contours:
-            self.logger.info(cv2.boundingRect(ct))
+            self.logAThing(cv2.boundingRect(ct))
             area = cv2.contourArea(ct)
-            # self.logger.info("Second largest contour", secondLargestContour)
+            # self.logAThing("Second largest contour", secondLargestContour)
             if area > secondLargestArea:
                 if area > largestArea:
                     secondLargestArea = largestArea
@@ -165,8 +170,8 @@ class MyClass(GeneratedClass):
                     secondLargestContour = i
             i = i + 1
 
-        self.logger.info("Largest contour index " + str(cv2.boundingRect(contours[largestContour])))
-        self.logger.info("Second largest contour index " +
+        self.logAThing("Largest contour index " + str(cv2.boundingRect(contours[largestContour])))
+        self.logAThing("Second largest contour index " +
             str(cv2.boundingRect(contours[secondLargestContour])))
 
         # Crop image to inside of second largest contour
@@ -209,23 +214,23 @@ class MyClass(GeneratedClass):
             i = 0
             for ct in contours:
                 if cv2.boundingRect(ct) == boundingRectToDelete:
-                    self.logger.info("Deleting" + str(cv2.boundingRect(ct)))
+                    self.logAThing("Deleting" + str(cv2.boundingRect(ct)))
                     contours.pop(i)
-                    self.logger.info("New length" + str(len(contours)))
+                    self.logAThing("New length" + str(len(contours)))
                 else:
-                        i = i + 1
+                    i = i + 1
 
-            for ct in contours:
-                self.logger.info(str(cv2.boundingRect(ct)))
+        for ct in contours:
+            self.logAThing(str(cv2.boundingRect(ct)))
 
-            x = 1
-            y = 2
-            for ct in contours:
-                cv2.drawContours(colorCroppped, [ct], -1, (255, 0+x*10, 0+y*11), 15)
-                x = x + 1
-                y = y + 1
+        x = 1
+        y = 2
+        for ct in contours:
+            cv2.drawContours(colorCroppped, [ct], -1, (255, 0+x/1280*255, 0+y/960*255), 15)
+            x = x + 1
+            y = y + 1
 
-            cv2.imwrite(IM_DIR + "outers.jpg", img)
+        cv2.imwrite(IM_DIR + "outers.jpg", img)
 
         # ======================================================
         # ======================================================
@@ -243,7 +248,7 @@ class MyClass(GeneratedClass):
         imgCopyCropped = imgCopy[y1+MARGIN:y1+h1-MARGIN, x1+MARGIN:x1+w1-MARGIN]
 
         tileCount = 0
-        self.logger.info("finding contours in tiles")
+        self.logAThing("finding contours in tiles")
         for cnt in contours:
             tileCount = tileCount+1
             # use boundingrect to get coordinates of tile
@@ -255,10 +260,10 @@ class MyClass(GeneratedClass):
             imgCopyTile = imgCopyCropped[y+MARGIN:y+h-MARGIN,x+MARGIN:x+w-MARGIN]
 
             #determine the array indexes of the tile
-            tileX = int(round(((x)/img_width)*3))
-            tileY = int(round(((y)/img_height)*3))
-            # self.logger.info(x, "  ", y)
-            # self.logger.info(tileX, "  ", tileY)
+            tileX = int(round(((x*3.0)/img_width)))
+            tileY = int(round(((y*3.0)/img_height)))
+            self.logAThing(str(img_width)+" "+str(img_height)+" "+str(x)+"  "+str(y)+" "+str(tileX)+"  "+str(tileY))
+
 
             if tileX >= 0 and tileX < 3 and tileY >= 0 and tileY < 3:
                 # find contours in the tile image. RETR_TREE retrieves all of the contours and reconstructs a full hierarchy of nested contours.
@@ -269,11 +274,11 @@ class MyClass(GeneratedClass):
                     if cv2.contourArea(ct) < tileArea * 0.70 and w2 > 0.2 * w and h2 > 0.2 * h:
                         number_of_white_pix = np.sum(tile[y2+MARGIN:y2+h2-MARGIN,x2+MARGIN:x2+w2-MARGIN] == 255)
                         number_of_black_pix = np.sum(tile[y2+MARGIN:y2+h2-MARGIN,x2+MARGIN:x2+w2-MARGIN] == 0)
-                        self.logger.info(str(tileX) + str(tileY))
-                        self.logger.info('Number of white pixels:' + str(number_of_white_pix))
-                        self.logger.info('Number of black pixels:' + str(number_of_black_pix))
+                        self.logAThing(str(tileX) + str(tileY))
+                        self.logAThing('Number of white pixels:' + str(number_of_white_pix))
+                        self.logAThing('Number of black pixels:' + str(number_of_black_pix))
                         # the area needs to be at least 5% black in order to be legit
-                        if (number_of_black_pix/number_of_white_pix > 0.05):
+                        if (20*number_of_black_pix > number_of_white_pix):
                             cv2.drawContours(imgCopyTile, [ct], -1, (255,0+tileX*127,0+tileY*127), 15)
                             #calculate the solitity
                             area = cv2.contourArea(ct)
@@ -284,7 +289,7 @@ class MyClass(GeneratedClass):
                             else:
                                 solidity = 1
 
-                            self.logger.info('Solidity', solidity)
+                            self.logAThing('Solidity' + str(solidity))
 
                             # fill the gamestate with the right sign
                             if(solidity > 0.5):
@@ -292,14 +297,14 @@ class MyClass(GeneratedClass):
                             else:
                                 gamestate[tileY][tileX] = "X"
             else:
-                self.logger.info("tile out of bounds:", tileX, tileY)
-        #self.logger.info the gamestate
-        self.logger.info("Gamestate:")
+                self.logAThing("tile out of bounds: " + str(tileX) + " " + str(tileY))
+        #self.logAThing the gamestate
+        self.logAThing("Gamestate:")
         for line in gamestate:
             linetxt = ""
             for cel in line:
                 linetxt = linetxt + "|" + cel
-            self.logger.info(linetxt)
+            self.logAThing(linetxt)
 
         cv2.imwrite(IM_DIR + "inners.jpg", imgCopy)
         self.onStopped() #activate the output of the box
