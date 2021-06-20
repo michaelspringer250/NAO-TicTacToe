@@ -15,7 +15,7 @@
       <BehaviorLayer name="behavior_layer1">
         <BehaviorKeyframe name="keyframe1" index="1">
           <Diagram>
-            <Box name="Take Picture" id="1" localization="8" tooltip='Robot will take a picture of what it is currently looking at and save it to &quot;/home/nao/recordings/cameras/image.jpg&quot;.' x="633" y="22">
+            <Box name="Take Picture" id="1" localization="8" tooltip='Robot will take a picture of what it is currently looking at and save it to &quot;/home/nao/recordings/cameras/image.jpg&quot;.' x="698" y="33">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -45,8 +45,6 @@ class MyClass(GeneratedClass):
         try:
             photoCaptureProxy = ALProxy("ALPhotoCapture", IP, PORT)
         except Exception, e:
-            print "Error when creating ALPhotoCapture proxy:"
-            print str(e)
             self.logger.info("Error when creating ALPhotoCapture proxy:")
             self.logger.info(str(e))
             exit(1)
@@ -66,7 +64,7 @@ class MyClass(GeneratedClass):
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
               <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
             </Box>
-            <Box name="Calculate Game State" id="2" localization="8" tooltip='Access image at &quot;/home/nao/recordings/cameras/image.jpg&quot; and turn it into a 2D array containing the current game state (board). This array is passed into the output.' x="793" y="20">
+            <Box name="Calculate Game State" id="2" localization="8" tooltip='Access image at &quot;/home/nao/recordings/cameras/image.jpg&quot; and turn it into a 2D array containing the current game state (board). This array is passed into the output.' x="836" y="15">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -320,11 +318,56 @@ class MyClass(GeneratedClass):
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
               <Output name="onStopped" type="0" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
             </Box>
-            <Box name="Initialize Game" id="3" localization="8" tooltip="Get verbal input from player to set initial values for player turn, human marker.&#x0A;Set empty board state." x="68" y="9">
+            <Box name="Initialize Game" id="3" localization="8" tooltip="Get verbal input from player to set initial values for player turn, human marker.&#x0A;Set empty board state." x="236" y="13">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
-                  <![CDATA[]]>
+                  <![CDATA[import os
+import sys
+import time
+from naoqi import ALProxy
+
+class MyClass(GeneratedClass):
+    IP = "10.50.30.157"
+    PORT = 9559
+    vocab = ["x", "o"]
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+         # Create a proxy to ALTextToSpeech
+        try:
+            tts = ALProxy("ALTextToSpeech", IP, PORT)
+        except Exception, e:
+            self.logger.info("Error when creating ALTextToSpeech proxy:")
+            self.logger.info(str(e))
+            exit(1)
+        # Create a proxy to ALSpeechRecognition
+        try:
+            asr = ALProxy("ALSpeechRecognition", IP, PORT)
+        except Exception, e:
+            self.logger.info("Error when creating ALSpeechRecognition proxy:")
+            self.logger.info(str(e))
+            exit(1)
+        asr.setLanguage("English")
+        asr.setVocabulary(vocab, False)
+
+
+    def onUnload(self):
+        #put clean-up code here
+        pass
+
+    def onInput_onStart(self):
+        tts.say("Welcome to tic tac toe! Would you like to be X or O?")
+        # Subscribe to event
+        # Listen for X or O
+        # Verify input
+        # Unsubscribe from event
+
+
+    def onInput_onStop(self):
+        self.onUnload() #it is recommended to reuse the clean-up as the box is stopped
+        self.onStopped() #activate the output of the box]]>
                 </content>
               </script>
               <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
@@ -332,7 +375,7 @@ class MyClass(GeneratedClass):
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
               <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
             </Box>
-            <Box name="Next Turn" id="4" localization="8" tooltip="Pass control to Human Turn or Robot Turn based on the player turn variable." x="203" y="12">
+            <Box name="Next Turn" id="4" localization="8" tooltip="Pass control to Human Turn or Robot Turn based on the player turn variable." x="386" y="15">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -363,7 +406,7 @@ class MyClass(GeneratedClass):
               <Output name="onHumanTurn" type="1" type_size="1" nature="1" inner="0" tooltip="It is the human&apos;s turn" id="4" />
               <Output name="onRobotTurn" type="1" type_size="1" nature="1" inner="0" tooltip="" id="5" />
             </Box>
-            <Box name="Human Turn" id="5" localization="8" tooltip="Human player is prompted to draw their move on the board and tap the robot&apos;s head when they are done." x="379" y="9">
+            <Box name="Human Turn" id="5" localization="8" tooltip="Human player is prompted to draw their move on the board and tap the robot&apos;s head when they are done." x="526" y="2">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -375,7 +418,7 @@ class MyClass(GeneratedClass):
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
               <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
             </Box>
-            <Box name="Robot Turn" id="6" localization="8" tooltip="Robot will use AI to calculate the move it wants to make, tell the human to draw that move, and await a tap on the head to indicate the move has been drawn.&#x0A;Robot saves its desired move with ALMemory." x="379" y="109">
+            <Box name="Robot Turn" id="6" localization="8" tooltip="Robot will use AI to calculate the move it wants to make, tell the human to draw that move, and await a tap on the head to indicate the move has been drawn.&#x0A;Robot saves its desired move with ALMemory." x="558" y="105">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -387,7 +430,7 @@ class MyClass(GeneratedClass):
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
               <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
             </Box>
-            <Box name="Detect Cheating" id="7" localization="8" tooltip="Takes the game state calculated in Calculate Game State and compare it with the previous game state. This comparison checks for cheating. If cheating is found, control is passed to On Cheating box, elsewise control is passed to On Success box." x="930" y="20">
+            <Box name="Detect Cheating" id="7" localization="8" tooltip="Takes the game state calculated in Calculate Game State and compare it with the previous game state. This comparison checks for cheating. If cheating is found, control is passed to On Cheating box, elsewise control is passed to On Success box." x="964" y="25">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -418,7 +461,7 @@ class MyClass(GeneratedClass):
               <Output name="onSuccess" type="1" type_size="1" nature="1" inner="0" tooltip="A valid move has been made." id="4" />
               <Output name="OnCheat" type="1" type_size="1" nature="1" inner="0" tooltip="Human has cheated in some way." id="5" />
             </Box>
-            <Box name="OnCheating" id="8" localization="8" tooltip="The human player has cheated in some way. Robot prompts human to set the board to how it should be and tap the robot&apos;s head when fixes are done." x="793" y="182">
+            <Box name="OnCheating" id="8" localization="8" tooltip="The human player has cheated in some way. Robot prompts human to set the board to how it should be and tap the robot&apos;s head when fixes are done." x="813" y="138">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -430,7 +473,7 @@ class MyClass(GeneratedClass):
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
               <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
             </Box>
-            <Box name="OnSuccess" id="9" localization="8" tooltip="A valid move has been made on the board. Update the global board state to reflect the new move, update player turn. Also check for if there is a winner/tie. In this event go to On Game End box, otherwise go to Next Turn box." x="960" y="266">
+            <Box name="OnSuccess" id="9" localization="8" tooltip="A valid move has been made on the board. Update the global board state to reflect the new move, update player turn. Also check for if there is a winner/tie. In this event go to On Game End box, otherwise go to Next Turn box." x="444" y="446">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
@@ -443,7 +486,7 @@ class MyClass(GeneratedClass):
               <Output name="onTurnDone" type="1" type_size="1" nature="1" inner="0" tooltip="A valid turn is complete, and there is no winner yet." id="4" />
               <Output name="onGameEnd" type="3" type_size="1" nature="1" inner="0" tooltip='Tell On Game End if the winner is &quot;human&quot;, &quot;robot&quot;, or &quot;tie&quot;.' id="5" />
             </Box>
-            <Box name="On Game End" id="10" localization="8" tooltip="Robot vocally tells human who won, or if there was a tie.&#x0A;Robot asks player if they want to play again and ends the program or goes back to Initialize Game accordingly." x="1059" y="360">
+            <Box name="On Game End" id="10" localization="8" tooltip="Robot vocally tells human who won, or if there was a tie.&#x0A;Robot asks player if they want to play again and ends the program or goes back to Initialize Game accordingly." x="660" y="411">
               <bitmap>media/images/box/box-python-script.png</bitmap>
               <script language="4">
                 <content>
