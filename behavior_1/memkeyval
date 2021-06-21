@@ -1,0 +1,4 @@
+"board" : the board state of tictactoe upon last successful validation
+"turn" : who's turn it is - "human" or "robot"
+"marker" : the marker that the human is using - "X" or "O"
+"robotCoords" : the coordinates of the robot's intended marker, stored as [y,x]
