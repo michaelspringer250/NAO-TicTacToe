@@ -86,7 +86,7 @@ else:
         if lenNewSymbols > 1:
             for coord in newSymbolCoords:
                 failMsgs, failed = failPrint(failMsgs, "Extra symbol at " + yWord(coord[0]) + ", " + xWord(coord[1]))
-            failMsgs, failed = failPrint(failMsgs, "Please keep only one symbol")
+            failMsgs, failed = failPrint(failMsgs, "Please keep only one new symbol")
         else:
             newCoord = newSymbolCoords[0]
             if expectedSymbol != newSymbols[newCoord[0]][newCoord[1]]:
