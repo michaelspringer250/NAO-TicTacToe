@@ -4468,7 +4468,7 @@ class MyClass(GeneratedClass):
             self.logAThing(linetxt)
 
         cv2.imwrite(IM_DIR + "inners.jpg", imgCopy)
-        self.onStopped(gameState) #activate the output of the box
+        self.onStopped(gamestate) #activate the output of the box
 
 
     def onInput_onStop(self):
@@ -4532,9 +4532,12 @@ class MyClass(GeneratedClass):
         pass
 
     def onInput_onStart(self):
+        self.logger.info("new turn")
         if self.mem.getData("turn") == "human":
+            self.logger.info("human turn")
             self.onHumanTurn()
         else:
+            self.logger.info("robot turn")
             self.onRobotTurn()
 
     def onInput_onStop(self):
@@ -4590,10 +4593,27 @@ class MyClass(GeneratedClass):
                         <script language="4">
                           <content>
                             <![CDATA[import sys
-import ALProxy
+from naoqi import ALProxy
 import numpy as np
 import copy
 import random
+
+def yWord(y):
+    if y == 0:
+        return "top"
+    elif y == 1:
+        return "middle"
+    elif y == 2:
+        return "bottom"
+
+def xWord(x):
+    if x == 0:
+        return "left"
+    elif x == 1:
+        return "middle"
+    elif x == 2:
+        return "right"
+
 
 # Checks whether the player has three
 # of their marks in a horizontal row
@@ -4745,6 +4765,13 @@ class MyClass(GeneratedClass):
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
             exit(1)
+        # Create a proxy to ALTextToSpeech
+        try:
+            self.tts = ALProxy("ALTextToSpeech", self.IP, self.PORT)
+        except Exception, e:
+            self.logger.info("Error when creating ALTextToSpeech proxy:")
+            self.logger.info(str(e))
+            exit(1)
 
     def onUnload(self):
         #put clean-up code here
@@ -4755,6 +4782,7 @@ class MyClass(GeneratedClass):
         player = "O" if self.mem.getData("marker") == "X" else "X"
         result, playedCoord = branch(board, player, None)
         self.mem.insertData("robotCoords", playedCoord)
+        self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
         self.onStopped()
         pass
 
@@ -4973,13 +5001,13 @@ class MyClass(GeneratedClass):
               <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
               <Input name="onStart" type="0" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
-              <Output name="onCheat" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" />
-              <Output name="onSuccess" type="0" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="5" />
+              <Output name="onSuccess" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+              <Output name="onCheat" type="1" type_size="1" nature="1" inner="0" tooltip="" id="5" />
               <Timeline enable="0">
                 <BehaviorLayer name="behavior_layer1">
                   <BehaviorKeyframe name="keyframe1" index="1">
                     <Diagram>
-                      <Box name="Detect Cheating" id="7" localization="8" tooltip="Takes the game state calculated in Calculate Game State and compare it with the previous game state. This comparison checks for cheating. If cheating is found, control is passed to On Cheating box, elsewise control is passed to On Success box." x="223" y="58">
+                      <Box name="Detect Cheating" id="7" localization="8" tooltip="Takes the game state calculated in Calculate Game State and compare it with the previous game state. This comparison checks for cheating. If cheating is found, control is passed to On Cheating box, elsewise control is passed to On Success box." x="180" y="121">
                         <bitmap>media/images/box/box-python-script.png</bitmap>
                         <script language="4">
                           <content>
@@ -4997,11 +5025,11 @@ def yWord(y):
 
 def xWord(x):
     if x == 0:
-        return "right"
+        return "left"
     elif x == 1:
         return "middle"
     elif x == 2:
-        return "left"
+        return "right"
 
 def transpose(X):
     result = [[X[j][i] for j in range(len(X))] for i in range(len(X[0]))]
@@ -5119,6 +5147,7 @@ class MyClass(GeneratedClass):
         if failed == True:
             self.onCheat(failMsgs)
         else:
+            self.mem.insertData("board", newBoard)
             self.onSuccess()
 
     def onInput_onStop(self):
@@ -5132,25 +5161,37 @@ class MyClass(GeneratedClass):
                         <Output name="onSuccess" type="1" type_size="1" nature="1" inner="0" tooltip="A valid move has been made." id="4" />
                         <Output name="onCheat" type="0" type_size="1" nature="1" inner="0" tooltip="Human has cheated in some way." id="5" />
                       </Box>
-                      <Box name="OnCheating" id="8" localization="8" tooltip="The human player has cheated in some way. Robot prompts human to set the board to how it should be and tap the robot&apos;s head when fixes are done." x="469" y="155">
+                      <Box name="OnCheating" id="8" localization="8" tooltip="The human player has cheated in some way. Robot prompts human to set the board to how it should be and tap the robot&apos;s head when fixes are done." x="448" y="166">
                         <bitmap>media/images/box/box-python-script.png</bitmap>
                         <script language="4">
                           <content>
-                            <![CDATA[class MyClass(GeneratedClass):
+                            <![CDATA[import sys
+from naoqi import ALProxy
+
+class MyClass(GeneratedClass):
+    IP = "10.50.30.157"
+    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
-        #put initialization code here
-        pass
+        # Create a proxy to ALTextToSpeech
+        try:
+            self.tts = ALProxy("ALTextToSpeech", self.IP, self.PORT)
+        except Exception, e:
+            self.logger.info("Error when creating ALTextToSpeech proxy:")
+            self.logger.info(str(e))
+            exit(1)
 
     def onUnload(self):
         #put clean-up code here
         pass
 
-    def onInput_onStart(self):
-        #self.onStopped() #activate the output of the box
-        pass
+    def onInput_onStart(self, p):
+        for m in p:
+            self.tts.say(m)
+        self.tts.say("Tap my head when you have corrected the board.")
+        self.onStopped() #activate the output of the box
 
     def onInput_onStop(self):
         self.onUnload() #it is recommended to reuse the clean-up as the box is stopped
@@ -5162,10 +5203,194 @@ class MyClass(GeneratedClass):
                         <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
                         <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
                       </Box>
+                      <Box name="Wait For Signals" id="1" localization="8" tooltip="Wait for both inputs to be stimulated before stimulating its output." x="704" y="224">
+                        <bitmap>media/images/box/wait.png</bitmap>
+                        <script language="4">
+                          <content>
+                            <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.ok = [False]*2
+
+    def onUnload(self):
+        #puts code for box cleanup here
+        ""
+
+    def onStart(self, nInput):
+        self.ok[nInput-1] = True
+        bOutput = True
+        for bOk in self.ok:
+            bOutput = bOutput and bOk
+        if( bOutput ):
+            self.ok = [False]*2
+            self.signalsReceived()
+
+    def onInput_signal1(self):
+        self.onStart(1)
+
+    def onInput_signal2(self):
+        self.onStart(2)]]>
+                          </content>
+                        </script>
+                        <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" />
+                        <Input name="signal1" type="1" type_size="1" nature="1" inner="0" tooltip="First signal to wait." id="2" />
+                        <Input name="signal2" type="1" type_size="1" nature="1" inner="0" tooltip="Second signal to wait." id="3" />
+                        <Output name="signalsReceived" type="1" type_size="1" nature="2" inner="0" tooltip="Signal sent when both inputs have been stimulated." id="4" />
+                      </Box>
+                      <Box name="Tactile Head" id="2" localization="8" tooltip="Detect touch on head tactile sensor." x="443" y="330">
+                        <bitmap>media/images/box/sensors/tactileHead.png</bitmap>
+                        <script language="4">
+                          <content>
+                            <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.bIsRunning = False
+
+    def onUnload(self):
+        self.bIsRunning = False
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+
+    def onInput_onStop(self):
+        if( self.bIsRunning ):
+            self.onUnload() #~ it is usually a good idea to call onUnload of this box in a onStop method, as the code written in onUnload is used to finish the working of the box as well
+            self.onStopped() #~ activate output of the box
+        pass]]>
+                          </content>
+                        </script>
+                        <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                        <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                        <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                        <Input name="FrontTactilTouched" type="0" type_size="1" nature="4" stm_value_name="FrontTactilTouched" inner="1" tooltip="Connected to ALMemory. Will be stimulated every time the value subscribed to changes, respecting the refresh period." id="4" />
+                        <Input name="MiddleTactilTouched" type="0" type_size="1" nature="4" stm_value_name="MiddleTactilTouched" inner="1" tooltip="Connected to ALMemory. Will be stimulated every time the value subscribed to changes, respecting the refresh period." id="5" />
+                        <Input name="RearTactilTouched" type="0" type_size="1" nature="4" stm_value_name="RearTactilTouched" inner="1" tooltip="Connected to ALMemory. Will be stimulated every time the value subscribed to changes, respecting the refresh period." id="6" />
+                        <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is stopped." id="7" />
+                        <Output name="frontTouched" type="1" type_size="1" nature="2" inner="0" tooltip="The front tactile head sensor was touched." id="8" />
+                        <Output name="middleTouched" type="1" type_size="1" nature="2" inner="0" tooltip="The middle tactile head sensor was touched." id="9" />
+                        <Output name="rearTouched" type="1" type_size="1" nature="2" inner="0" tooltip="The rear tactile head sensor was touched." id="10" />
+                        <Timeline enable="0">
+                          <BehaviorLayer name="behavior_layer1">
+                            <BehaviorKeyframe name="keyframe1" index="1">
+                              <Diagram>
+                                <Box name="If &gt; 0" id="1" localization="8" tooltip="Transmit only if value is &gt; 0." x="260" y="17">
+                                  <bitmap>media/images/box/box-diagram.png</bitmap>
+                                  <script language="4">
+                                    <content>
+                                      <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        #~ puts code for box initialization here
+        pass
+
+    def onUnload(self):
+        #~ puts code for box cleanup here
+        pass
+
+    def onInput_onStart(self, p):
+        if(p > 0):
+            self.onStopped() #~ activate output of the box
+        pass
+
+    def onInput_onStop(self):
+        self.onUnload() #~ it is usually a good idea to call onUnload of this box in a onStop method, as the code written in onUnload is used to finish the working of the box as well
+        pass]]>
+                                    </content>
+                                  </script>
+                                  <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                  <Input name="onStart" type="0" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                                  <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                                  <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                                </Box>
+                                <Box name="If &gt; 0" id="2" localization="8" tooltip="Transmit only if value is &gt; 0." x="256" y="119">
+                                  <bitmap>media/images/box/box-diagram.png</bitmap>
+                                  <script language="4">
+                                    <content>
+                                      <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        #~ puts code for box initialization here
+        pass
+
+    def onUnload(self):
+        #~ puts code for box cleanup here
+        pass
+
+    def onInput_onStart(self, p):
+        if(p > 0):
+            self.onStopped() #~ activate output of the box
+        pass
+
+    def onInput_onStop(self):
+        self.onUnload() #~ it is usually a good idea to call onUnload of this box in a onStop method, as the code written in onUnload is used to finish the working of the box as well
+        pass]]>
+                                    </content>
+                                  </script>
+                                  <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                  <Input name="onStart" type="0" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                                  <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                                  <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                                </Box>
+                                <Box name="If &gt; 0" id="3" localization="8" tooltip="Transmit only if value is &gt; 0." x="261" y="223">
+                                  <bitmap>media/images/box/box-diagram.png</bitmap>
+                                  <script language="4">
+                                    <content>
+                                      <![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        #~ puts code for box initialization here
+        pass
+
+    def onUnload(self):
+        #~ puts code for box cleanup here
+        pass
+
+    def onInput_onStart(self, p):
+        if(p > 0):
+            self.onStopped() #~ activate output of the box
+        pass
+
+    def onInput_onStop(self):
+        self.onUnload() #~ it is usually a good idea to call onUnload of this box in a onStop method, as the code written in onUnload is used to finish the working of the box as well
+        pass]]>
+                                    </content>
+                                  </script>
+                                  <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                                  <Input name="onStart" type="0" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                                  <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                                  <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                                </Box>
+                                <Link inputowner="1" indexofinput="2" outputowner="0" indexofoutput="4" />
+                                <Link inputowner="0" indexofinput="8" outputowner="1" indexofoutput="4" />
+                                <Link inputowner="2" indexofinput="2" outputowner="0" indexofoutput="5" />
+                                <Link inputowner="0" indexofinput="9" outputowner="2" indexofoutput="4" />
+                                <Link inputowner="3" indexofinput="2" outputowner="0" indexofoutput="6" />
+                                <Link inputowner="0" indexofinput="10" outputowner="3" indexofoutput="4" />
+                              </Diagram>
+                            </BehaviorKeyframe>
+                          </BehaviorLayer>
+                        </Timeline>
+                        <Resource name="Head-sequence" type="Lock" timeout="0" />
+                      </Box>
                       <Link inputowner="7" indexofinput="2" outputowner="0" indexofoutput="2" />
                       <Link inputowner="8" indexofinput="2" outputowner="7" indexofoutput="5" />
-                      <Link inputowner="0" indexofinput="5" outputowner="7" indexofoutput="4" />
-                      <Link inputowner="0" indexofinput="4" outputowner="8" indexofoutput="4" />
+                      <Link inputowner="0" indexofinput="4" outputowner="7" indexofoutput="4" />
+                      <Link inputowner="1" indexofinput="2" outputowner="8" indexofoutput="4" />
+                      <Link inputowner="2" indexofinput="2" outputowner="7" indexofoutput="5" />
+                      <Link inputowner="1" indexofinput="3" outputowner="2" indexofoutput="8" />
+                      <Link inputowner="1" indexofinput="3" outputowner="2" indexofoutput="9" />
+                      <Link inputowner="1" indexofinput="3" outputowner="2" indexofoutput="10" />
+                      <Link inputowner="0" indexofinput="5" outputowner="1" indexofoutput="4" />
                     </Diagram>
                   </BehaviorKeyframe>
                 </BehaviorLayer>
@@ -5220,10 +5445,8 @@ class MyClass(GeneratedClass):
         #put clean-up code here
         pass
 
-    def onInput_onStart(self, p):
-        # Update the global board to reflect the new move
-        self.mem.insertData("board", p)
-
+    def onInput_onStart(self):
+        p = self.mem.getData("board")
         # Determine if there is a winner
         if self.isWinner(p, "X"):
             if self.mem.getData("marker") == "X":
@@ -5253,7 +5476,7 @@ class MyClass(GeneratedClass):
                 </content>
               </script>
               <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
-              <Input name="onStart" type="0" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+              <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
               <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
               <Output name="onTurnDone" type="1" type_size="1" nature="1" inner="0" tooltip="A valid turn is complete, and there is no winner yet." id="4" />
               <Output name="onGameEnd" type="3" type_size="1" nature="1" inner="0" tooltip='Tell On Game End if the winner is &quot;human&quot;, &quot;robot&quot;, or &quot;tie&quot;.' id="5" />
@@ -7242,8 +7465,8 @@ class MyClass(GeneratedClass):
             <Link inputowner="1" indexofinput="2" outputowner="13" indexofoutput="4" />
             <Link inputowner="3" indexofinput="2" outputowner="1" indexofoutput="4" />
             <Link inputowner="2" indexofinput="2" outputowner="3" indexofoutput="4" />
-            <Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="4" />
-            <Link inputowner="9" indexofinput="2" outputowner="2" indexofoutput="5" />
+            <Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="5" />
+            <Link inputowner="9" indexofinput="2" outputowner="2" indexofoutput="4" />
             <Link inputowner="1" indexofinput="2" outputowner="9" indexofoutput="4" />
             <Link inputowner="5" indexofinput="2" outputowner="9" indexofoutput="5" />
             <Link inputowner="13" indexofinput="2" outputowner="5" indexofoutput="4" />
