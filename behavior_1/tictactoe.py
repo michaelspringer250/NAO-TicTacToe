@@ -85,7 +85,7 @@ def possibilities(board):
                 l.append((i, j))
     return(l)
 
-def weighResult(result, player):
+def scoreResult(result, player):
   if result == None:
     return 0
   else:
@@ -95,7 +95,7 @@ def weighResult(result, player):
       return -1
 
 # Evaluates the next move to make
-def branch(depth, board, player, playedCoord):
+def branch(board, player, playedCoord):
     result = evaluate(board)
 
     if result == -1:
@@ -116,21 +116,14 @@ def branch(depth, board, player, playedCoord):
             nextBoard[pos[0]][pos[1]] = player
             evaluation = evaluate(nextBoard)
             if evaluation == player:
-                # print("Depth " + str(depth))
-                # print("Win found at " + str(pos))
                 winFound = True
-                bestOptions.append((weighResult(evaluation, player), pos))
+                bestOptions.append((evaluation, pos))
         if winFound == False:
             for pos in positions:
                 nextBoard = copy.deepcopy(board)
                 nextBoard[pos[0]][pos[1]] = player
-                # print("Depth " + str(depth))
-                # print("Evaluating placing " + player + " at " + str(pos))
-                # print(str(board[0]) + "\n" + str(board[1]) + "\n" + str(board[2]))
-                if (depth == 0 and pos == (1,0)):
-                    a = 1 + 2
-                nextResult, _ = branch(depth + 1, nextBoard, nextPlayer, pos)
-                score = weighResult(nextResult, player)
+                nextResult, _ = branch(nextBoard, nextPlayer, pos)
+                score = scoreResult(nextResult, player)
                 #choose the best branch to return
                 if largest == None or largest < score:
                     largest = score
@@ -146,12 +139,12 @@ def branch(depth, board, player, playedCoord):
         return result, playedCoord
 
 board = [
-["O","X","O"],
-["X","O","X"],
-["X","O","X"]]
+["-","-","-"],
+["-","-","-"],
+["-","-","X"]]
 
-player = "X"
+player = "O"
 
-result, playedCoord = branch(0, board, player, None)
+result, playedCoord = branch(board, player, None)
 print(result)
 print(playedCoord)
