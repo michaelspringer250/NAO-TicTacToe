@@ -56,15 +56,13 @@ class MyClass(GeneratedClass):
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # Create a proxy to ALMemory
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
@@ -99,15 +97,13 @@ class MyClass(GeneratedClass):
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # Create a proxy to ALMemory
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
@@ -144,15 +140,13 @@ class MyClass(GeneratedClass):
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # Create a proxy to ALMemory
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
@@ -4118,15 +4112,13 @@ class MyClass(GeneratedClass):
                         <script language="4">
                           <content>
                             <![CDATA[class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # Create a proxy to ALTextToSpeech
         try:
-            self.tts = ALProxy("ALTextToSpeech", self.IP, self.PORT)
+            self.tts = self.session().service( "ALTextToSpeech" )
         except Exception, e:
             self.logger.info("Error when creating ALTextToSpeech proxy:")
             self.logger.info(str(e))
@@ -4200,13 +4192,9 @@ class MyClass(GeneratedClass):
         pass
 
     def onInput_onStart(self):
-        # Replace this with your robot's IP address
-        IP = "10.50.30.157"
-        PORT = 9559
-
         # Create a proxy to ALPhotoCapture
         try:
-            photoCaptureProxy = ALProxy("ALPhotoCapture", IP, PORT)
+            photoCaptureProxy = self.session().service( "ALPhotoCapture" )
         except Exception, e:
             self.logger.info("Error when creating ALPhotoCapture proxy:")
             self.logger.info(str(e))
@@ -4514,14 +4502,12 @@ import time
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
@@ -4564,7 +4550,7 @@ class MyClass(GeneratedClass):
     def onLoad(self):
         # Create a proxy to ALTextToSpeech
         try:
-            self.tts = ALProxy("ALTextToSpeech", self.IP, self.PORT)
+            self.tts = self.session().service( "ALTextToSpeech" )
         except Exception, e:
             self.logger.info("Error when creating ALTextToSpeech proxy:")
             self.logger.info(str(e))
@@ -4752,22 +4738,19 @@ def branch(board, player, playedCoord):
         return result, playedCoord
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    #IP = "127.0.0.1"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
             exit(1)
         # Create a proxy to ALTextToSpeech
         try:
-            self.tts = ALProxy("ALTextToSpeech", self.IP, self.PORT)
+            self.tts = self.session().service( "ALTextToSpeech" )
         except Exception, e:
             self.logger.info("Error when creating ALTextToSpeech proxy:")
             self.logger.info(str(e))
@@ -5044,16 +5027,13 @@ def failPrint(c, failMsgs, s):
     return failMsgs, True
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    #IP = "127.0.0.1"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # init memory access
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
@@ -5169,15 +5149,13 @@ class MyClass(GeneratedClass):
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # Create a proxy to ALTextToSpeech
         try:
-            self.tts = ALProxy("ALTextToSpeech", self.IP, self.PORT)
+            self.tts = self.session().service( "ALTextToSpeech" )
         except Exception, e:
             self.logger.info("Error when creating ALTextToSpeech proxy:")
             self.logger.info(str(e))
@@ -5404,8 +5382,6 @@ class MyClass(GeneratedClass):
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
 
     def isWinner(self, b, l):
         return ((b[0][0] == l and b[0][1] == l and b[0][2] == l) or # top across
@@ -5435,7 +5411,7 @@ class MyClass(GeneratedClass):
     def onLoad(self):
         # Create a proxy to ALMemory
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
@@ -5489,15 +5465,13 @@ class MyClass(GeneratedClass):
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # Create a proxy to ALMemory
         try:
-            self.mem = ALProxy("ALMemory", self.IP, self.PORT)
+            self.mem = self.session().service( "ALMemory" )
         except Exception, e:
             self.logger.info("Error when creating ALMemory proxy:")
             self.logger.info(str(e))
@@ -5547,15 +5521,13 @@ class MyClass(GeneratedClass):
 from naoqi import ALProxy
 
 class MyClass(GeneratedClass):
-    IP = "10.50.30.157"
-    PORT = 9559
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
         # Create a proxy to ALTextToSpeech
         try:
-            self.tts = ALProxy("ALTextToSpeech", self.IP, self.PORT)
+            self.tts = self.session().service( "ALTextToSpeech" )
         except Exception, e:
             self.logger.info("Error when creating ALTextToSpeech proxy:")
             self.logger.info(str(e))
