@@ -1966,7 +1966,7 @@ class MyClass(GeneratedClass):
                                   <Parameter name="Activate help command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the help command. So you can say &quot;help&quot; during the speech recognition&#x0A;and the robot will tell you more information.&#x0A;You will still be able to ask help by clicking the torso button.' id="17" />
                                   <Parameter name="Activate repeat command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Activate the repeat command. So you can say &quot;repeat&quot; during the speech&#x0A;recognition and the robot will repeat the question.' id="18" />
                                   <Parameter name="Activate exit command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the exit command. So you can say &quot;exit&quot; during the speech recognition&#x0A;and the box will be stopped and the &apos;other&apos; output will be stimulated with&#x0A;&quot;wordRecognised&quot;.&#x0A;You will still be able to exit the box with&#x0A;the tactile sensor.' id="19" />
-                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="" id="20">
+                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="disabled" default_value="contextual" custom_choice="0" tooltip="" id="20">
                                     <Choice value="contextual" />
                                     <Choice value="random" />
                                     <Choice value="disabled" />
@@ -3883,7 +3883,7 @@ class MyClass(GeneratedClass):
                                   <Parameter name="Activate help command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the help command. So you can say &quot;help&quot; during the speech recognition&#x0A;and the robot will tell you more information.&#x0A;You will still be able to ask help by clicking the torso button.' id="17" />
                                   <Parameter name="Activate repeat command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Activate the repeat command. So you can say &quot;repeat&quot; during the speech&#x0A;recognition and the robot will repeat the question.' id="18" />
                                   <Parameter name="Activate exit command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the exit command. So you can say &quot;exit&quot; during the speech recognition&#x0A;and the box will be stopped and the &apos;other&apos; output will be stimulated with&#x0A;&quot;wordRecognised&quot;.&#x0A;You will still be able to exit the box with&#x0A;the tactile sensor.' id="19" />
-                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="" id="20">
+                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="disabled" default_value="contextual" custom_choice="0" tooltip="" id="20">
                                     <Choice value="contextual" />
                                     <Choice value="random" />
                                     <Choice value="disabled" />
@@ -5884,7 +5884,7 @@ class MyClass(GeneratedClass):
                                   <Parameter name="Activate help command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the help command. So you can say &quot;help&quot; during the speech recognition&#x0A;and the robot will tell you more information.&#x0A;You will still be able to ask help by clicking the torso button.' id="18" />
                                   <Parameter name="Activate repeat command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Activate the repeat command. So you can say &quot;repeat&quot; during the speech&#x0A;recognition and the robot will repeat the question.' id="19" />
                                   <Parameter name="Activate exit command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the exit command. So you can say &quot;exit&quot; during the speech recognition&#x0A;and the box will be stopped and the &apos;other&apos; output will be stimulated with&#x0A;&quot;wordRecognised&quot;.&#x0A;You will still be able to exit the box with&#x0A;the tactile sensor.' id="20" />
-                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="" id="21">
+                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="disabled" default_value="contextual" custom_choice="0" tooltip="" id="21">
                                     <Choice value="contextual" />
                                     <Choice value="random" />
                                     <Choice value="disabled" />
@@ -6696,7 +6696,8 @@ class MyClass(GeneratedClass):
         player = "O" if self.mem.getData("marker") == "X" else "X"
         result, playedCoord = branch(board, player, None)
         self.mem.insertData("robotCoords", playedCoord)
-        self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
+        self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]) + ". Tap my head when you have written my move.")
+
         self.onStopped(playedCoord)
         pass
 
@@ -8657,11 +8658,12 @@ class MyClass(GeneratedClass):
         pass
 
     def onInput_onStart(self):
+        self.logger.info("advance turn")
         p = self.mem.getData("board")
         gameMode = self.mem.getData("game")
         turn = self.mem.getData("turn")
         # Determine if there is a winner
-        if gameMode == "regular":
+        if gameMode == "regular" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
             if self.isWinner(p, "X"):
                 if self.mem.getData("marker") == "X":
                     self.onGameEnd("human")
@@ -8672,12 +8674,12 @@ class MyClass(GeneratedClass):
                     self.onGameEnd("human")
                 else:
                     self.onGameEnd("robot")
-        elif gameMode == "wild":
-            if turn = "human" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
+        elif gameMode == "wild" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
+            if turn == "human" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
                 self.onGameEnd("human")
-            elif turn = "robot" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
+            elif turn == "robot" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
                 self.onGameEnd("robot")
-        elif gameMode == "reverse":
+        elif gameMode == "reverse" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
             if self.isWinner(p, "X"):
                 if self.mem.getData("marker") == "X":
                     self.onGameEnd("robot")
@@ -8688,7 +8690,6 @@ class MyClass(GeneratedClass):
                     self.onGameEnd("robot")
                 else:
                     self.onGameEnd("human")
-
         elif self.isBoardFull(p):
             self.onGameEnd("tie")
         else:
@@ -10541,7 +10542,7 @@ class MyClass(GeneratedClass):
                                   <Parameter name="Activate help command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the help command. So you can say &quot;help&quot; during the speech recognition&#x0A;and the robot will tell you more information.&#x0A;You will still be able to ask help by clicking the torso button.' id="17" />
                                   <Parameter name="Activate repeat command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Activate the repeat command. So you can say &quot;repeat&quot; during the speech&#x0A;recognition and the robot will repeat the question.' id="18" />
                                   <Parameter name="Activate exit command" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip='Enable the exit command. So you can say &quot;exit&quot; during the speech recognition&#x0A;and the box will be stopped and the &apos;other&apos; output will be stimulated with&#x0A;&quot;wordRecognised&quot;.&#x0A;You will still be able to exit the box with&#x0A;the tactile sensor.' id="19" />
-                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="" id="20">
+                                  <Parameter name="Body language mode" inherits_from_parent="0" content_type="3" value="disabled" default_value="contextual" custom_choice="0" tooltip="" id="20">
                                     <Choice value="contextual" />
                                     <Choice value="random" />
                                     <Choice value="disabled" />
