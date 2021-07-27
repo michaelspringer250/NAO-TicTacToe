@@ -6067,6 +6067,7 @@ class MyClass(GeneratedClass):
                                 <Link inputowner="0" indexofinput="5" outputowner="1" indexofoutput="7" />
                                 <Link inputowner="2" indexofinput="2" outputowner="1" indexofoutput="5" />
                                 <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="3" />
+                                <Link inputowner="0" indexofinput="5" outputowner="1" indexofoutput="8" />
                               </Diagram>
                             </BehaviorKeyframe>
                           </BehaviorLayer>
@@ -6757,6 +6758,7 @@ class MyClass(GeneratedClass):
             modifiers = []
         result, playedCoord, playedSymbol = branch([], board, PType.P1, symbol, None, None)
         self.mem.insertData("robotCoords", playedCoord)
+        self.mem.insertData("playedSymbol", playedSymbol)
         self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]) + ". Tap my head when you have written my move.")
 
         self.onStopped(playedCoord)
@@ -8358,6 +8360,7 @@ class MyClass(GeneratedClass):
         robotTurn = True if self.mem.getData("turn") == "robot" else False
         if robotTurn == True:
             robotCoords = self.mem.getData("robotCoords")
+            playedSymbol = self.mem.getData("playedSymbol")
         expectedSymbol = None
         if self.mem.getData("marker") == "X":
             expectedSymbol = "O" if robotTurn == True else "X"
@@ -8403,6 +8406,9 @@ class MyClass(GeneratedClass):
                     else:
                         if self.mem.getData("game") != "wild":
                             if expectedSymbol != newSymbols[coord[0]][coord[1]]:
+                                failMsgs, failed = failPrint(self, failMsgs, "Incorrect symbol at " + yWord(coord[0]) + ", " + xWord(coord[1]))
+                        else:
+                            if playedSymbol != newBoard[robotCoords[0]][robotCoords[1]]:
                                 failMsgs, failed = failPrint(self, failMsgs, "Incorrect symbol at " + yWord(coord[0]) + ", " + xWord(coord[1]))
         # choose which new symbol to keep on player turn
         else:

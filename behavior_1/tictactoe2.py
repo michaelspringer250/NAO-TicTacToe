@@ -212,12 +212,12 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
 
 
 #board = self.mem.getData("board")
-board = [["-","X","-"],
+board = [["-","-","-"],
         ["-","X","-"],
-        ["-","-","-"]]
+        ["O","X","O"]]
 #player = "O" if self.mem.getData("marker") == "X" else "X"
 player = PType.P1
-result, playedCoord, playedSymbol = branch([], board, player, "O", None, None)
+result, playedCoord, playedSymbol = branch([Modifiers.Reverse], board, player, "X", None, None)
 print(result, playedCoord, playedSymbol)
 #self.mem.insertData("robotCoords", playedCoord)
 #self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
