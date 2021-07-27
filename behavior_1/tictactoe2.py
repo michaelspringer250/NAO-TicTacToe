@@ -32,10 +32,11 @@ def xWord(x):
 # Checks whether the player has three
 # of their marks in a horizontal row
 def row_win(board, player):
-    for x in range(len(board)):
+    length = len(board)
+    for x in range(length):
         win = True
 
-        for y in range(len(board)):
+        for y in range(length):
             if board[x][y] != player:
                 win = False
                 continue
@@ -47,10 +48,11 @@ def row_win(board, player):
 # Checks whether the player has three
 # of their marks in a vertical row
 def col_win(board, player):
-    for x in range(len(board)):
+    length = len(board)
+    for x in range(length):
         win = True
 
-        for y in range(len(board)):
+        for y in range(length):
             if board[y][x] != player:
                 win = False
                 continue
@@ -64,24 +66,27 @@ def col_win(board, player):
 def diag_win(board, player):
     win = True
     y = 0
-    for x in range(len(board)):
+    length = len(board)
+    for x in range(length):
         if board[x][x] != player:
             win = False
     if win:
         return win
     win = True
     if win:
-        for x in range(len(board)):
-            y = len(board) - 1 - x
+        for x in range(length):
+            y = length - 1 - x
             if board[x][y] != player:
                 win = False
     return win
 
 # Evaluates whether there is
 # a winner or a tie
+# player is the one who made the most recent move
 # None = tie, -1 = unfinished, PType.P1 = P1 wins, PType.P2 = P2 wins
 def evaluate(board, player):
     winner = None
+    length = len(board)
 
     for symbol in ["X", "O"]:
         if (row_win(board, symbol) or
@@ -91,10 +96,10 @@ def evaluate(board, player):
             winner = player
 
     if winner == None:
-        for x in range(len(board)):
+        for x in range(length):
             if winner == -1:
                 break
-            for y in range(len(board)):
+            for y in range(length):
                 if board[x][y] == "-":
                     winner = -1
                     break
@@ -104,34 +109,32 @@ def evaluate(board, player):
 # Check for empty places on board
 def possibilities(board):
     l = []
+    length = len(board)
 
-    for i in range(len(board)):
-        for j in range(len(board)):
+    for i in range(length):
+        for j in range(length):
 
             if board[i][j] == "-":
                 l.append((i, j))
     return(l)
 
+# Score a result based on the modifiers provided
 def scoreResult(modifiers, result, player):
-  if result == None:
-    return 0
-  else:
-    if Modifiers.Reverse in modifiers:
-        if result == player:
-            return -1
-        else:
-            return 1
+    multiplier = -1 if Modifiers.Reverse in modifiers else 1
+    if result == None or result == -1:
+        return 0
     else:
         if result == player:
-            return 1
+            return 1 * multiplier
         else:
-            return -1
+            return -1 * multiplier
 
 # Evaluates the next move to make
 # "playedSymbol" parameter only used with wild modifier
 # "symbol" paramter only used without wild modifier
 def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
-    result = evaluate(board, player)
+    # evaulate the result assuming the previous player made the last move
+    result = evaluate(board, PType.P1 if player == PType.P2 else PType.P2)
 
     if result == -1:
         #continue branching
@@ -152,23 +155,25 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
         bestOptions = []
         largest = None
         winFound = False
-        for pos in positions:
+        for pos in list(positions):
             nextBoard = copy.deepcopy(board)
             # search both X and O placements if we're playing wild
             if Modifiers.Wild in modifiers:
                 for sym in ["X", "O"]:
                     nextBoard[pos[0]][pos[1]] = sym
                     evaluation = evaluate(nextBoard, player)
-                    if evaluation == player:
+                    score = scoreResult(modifiers, evaluation, player)
+                    if score == 1:
                         winFound = True
                         bestOptions.append((player, pos, sym))
             # otherwise just use the next symbol
             else:
                 nextBoard[pos[0]][pos[1]] = symbol
                 evaluation = evaluate(nextBoard, player)
-                if evaluation == player:
+                score = scoreResult(modifiers, evaluation, player)
+                if score == 1:
                     winFound = True
-                    bestOptions.append((player, pos))
+                    bestOptions.append((player, pos, symbol))
         if winFound == False:
             for pos in positions:
                 nextBoard = copy.deepcopy(board)
@@ -192,32 +197,27 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
                     # choose the best branch to return
                     if largest == None or largest < score:
                         largest = score
-                        bestOptions = [(nextResult, pos)]
+                        bestOptions = [(nextResult, pos, symbol)]
                     elif largest == score:
-                        bestOptions.append((nextResult, pos))
+                        bestOptions.append((nextResult, pos, symbol))
 
         idx = random.randint(0,len(bestOptions)-1)
         bestResult = bestOptions[idx][0]
         bestCoord = bestOptions[idx][1]
-        if Modifiers.Wild in modifiers:
-            bestSymbol = bestOptions[idx][2]
-            return bestResult, bestCoord, bestSymbol
-        else:
-            return bestResult, bestCoord
+        bestSymbol = bestOptions[idx][2]
+        
+        return bestResult, bestCoord, bestSymbol
     else:
-        if Modifiers.Wild in modifiers:
-            return result, playedCoord, playedSymbol
-        else:
-            return result, playedCoord
+        return result, playedCoord, playedSymbol
 
 
 #board = self.mem.getData("board")
-board = [["-","O","-"],
-        ["O","X","O"],
-        ["O","O","O"]]
+board = [["-","X","-"],
+        ["-","X","-"],
+        ["-","-","-"]]
 #player = "O" if self.mem.getData("marker") == "X" else "X"
 player = PType.P1
-result, playedCoord, playedSymbol = branch([Modifiers.Wild], board, player, None, None, None)
+result, playedCoord, playedSymbol = branch([], board, player, "O", None, None)
 print(result, playedCoord, playedSymbol)
 #self.mem.insertData("robotCoords", playedCoord)
 #self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
