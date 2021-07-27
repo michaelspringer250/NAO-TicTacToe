@@ -84,7 +84,7 @@ def diag_win(board, player):
 # a winner or a tie
 # player is the one who made the most recent move
 # None = tie, -1 = unfinished, PType.P1 = P1 wins, PType.P2 = P2 wins
-def evaluate(board, player):
+def evaluate(modifiers, board, player):
     winner = None
     length = len(board)
 
@@ -104,7 +104,10 @@ def evaluate(board, player):
                     winner = -1
                     break
 
-    return winner
+    if Modifiers.Reverse in modifiers and winner != None and winner != -1:
+        return PType.P1 if winner == PType.P2 else PType.P2
+    else:
+        return winner
 
 # Check for empty places on board
 def possibilities(board):
@@ -119,22 +122,20 @@ def possibilities(board):
     return(l)
 
 # Score a result based on the modifiers provided
-def scoreResult(modifiers, result, player):
-    multiplier = -1 if Modifiers.Reverse in modifiers else 1
+def scoreResult(result, player):
     if result == None or result == -1:
         return 0
+    if result == player:
+        return 1
     else:
-        if result == player:
-            return 1 * multiplier
-        else:
-            return -1 * multiplier
+        return -1
 
 # Evaluates the next move to make
 # "playedSymbol" parameter only used with wild modifier
 # "symbol" paramter only used without wild modifier
 def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
     # evaulate the result assuming the previous player made the last move
-    result = evaluate(board, PType.P1 if player == PType.P2 else PType.P2)
+    result = evaluate(modifiers, board, PType.P1 if player == PType.P2 else PType.P2)
 
     if result == -1:
         #continue branching
@@ -161,16 +162,16 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
             if Modifiers.Wild in modifiers:
                 for sym in ["X", "O"]:
                     nextBoard[pos[0]][pos[1]] = sym
-                    evaluation = evaluate(nextBoard, player)
-                    score = scoreResult(modifiers, evaluation, player)
+                    evaluation = evaluate(modifiers, nextBoard, player)
+                    score = scoreResult(evaluation, player)
                     if score == 1:
                         winFound = True
                         bestOptions.append((player, pos, sym))
             # otherwise just use the next symbol
             else:
                 nextBoard[pos[0]][pos[1]] = symbol
-                evaluation = evaluate(nextBoard, player)
-                score = scoreResult(modifiers, evaluation, player)
+                evaluation = evaluate(modifiers, nextBoard, player)
+                score = scoreResult(evaluation, player)
                 if score == 1:
                     winFound = True
                     bestOptions.append((player, pos, symbol))
@@ -182,7 +183,7 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
                     for sym in ["X", "O"]:
                         nextBoard[pos[0]][pos[1]] = sym
                         nextResult, _, _ = branch(modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
-                        score = scoreResult(modifiers, nextResult, player)
+                        score = scoreResult(nextResult, player)
                         # choose the best branch to return
                         if largest == None or largest < score:
                             largest = score
@@ -193,7 +194,7 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
                 else:
                     nextBoard[pos[0]][pos[1]] = symbol
                     nextResult, _, _ = branch(modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
-                    score = scoreResult(modifiers, nextResult, player)
+                    score = scoreResult(nextResult, player)
                     # choose the best branch to return
                     if largest == None or largest < score:
                         largest = score
@@ -213,11 +214,10 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
 
 #board = self.mem.getData("board")
 board = [["-","-","-"],
-        ["-","X","-"],
-        ["O","X","O"]]
+        ["-","-","-"],
+        ["-","-","-"]]
 #player = "O" if self.mem.getData("marker") == "X" else "X"
-player = PType.P1
-result, playedCoord, playedSymbol = branch([Modifiers.Reverse], board, player, "X", None, None)
+result, playedCoord, playedSymbol = branch([Modifiers.Wild], board, PType.P1, "X", None, None)
 print(result, playedCoord, playedSymbol)
 #self.mem.insertData("robotCoords", playedCoord)
 #self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
