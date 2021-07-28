@@ -121,19 +121,20 @@ def possibilities(board):
                 l.append((i, j))
     return(l)
 
-# Score a result based on the modifiers provided
-def scoreResult(result, player):
+# Score a result
+def scoreResult(result, player, depth):
+    depthInfluence = depth / 50.0
     if result == None or result == -1:
         return 0
     if result == player:
-        return 1
+        return 1 - depthInfluence
     else:
-        return -1
+        return -1 + depthInfluence
 
 # Evaluates the next move to make
 # "playedSymbol" parameter only used with wild modifier
 # "symbol" paramter only used without wild modifier
-def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
+def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
     # evaulate the result assuming the previous player made the last move
     result = evaluate(modifiers, board, PType.P1 if player == PType.P2 else PType.P2)
 
@@ -163,18 +164,18 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
                 for sym in ["X", "O"]:
                     nextBoard[pos[0]][pos[1]] = sym
                     evaluation = evaluate(modifiers, nextBoard, player)
-                    score = scoreResult(evaluation, player)
-                    if score == 1:
+                    score = scoreResult(evaluation, player, depth + 1)
+                    if score > 0:
                         winFound = True
-                        bestOptions.append((player, pos, sym))
+                        bestOptions.append((player, pos, sym, depth + 1))
             # otherwise just use the next symbol
             else:
                 nextBoard[pos[0]][pos[1]] = symbol
                 evaluation = evaluate(modifiers, nextBoard, player)
-                score = scoreResult(evaluation, player)
-                if score == 1:
+                score = scoreResult(evaluation, player, depth + 1)
+                if score > 0:
                     winFound = True
-                    bestOptions.append((player, pos, symbol))
+                    bestOptions.append((player, pos, symbol, depth + 1))
         if winFound == False:
             for pos in positions:
                 nextBoard = copy.deepcopy(board)
@@ -182,43 +183,44 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
                 if Modifiers.Wild in modifiers:
                     for sym in ["X", "O"]:
                         nextBoard[pos[0]][pos[1]] = sym
-                        nextResult, _, _ = branch(modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
-                        score = scoreResult(nextResult, player)
+                        nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
+                        score = scoreResult(nextResult, player, resultDepth)
                         # choose the best branch to return
                         if largest == None or largest < score:
                             largest = score
-                            bestOptions = [(nextResult, pos, sym)]
+                            bestOptions = [(nextResult, pos, sym, resultDepth)]
                         elif largest == score:
-                            bestOptions.append((nextResult, pos, sym))
+                            bestOptions.append((nextResult, pos, sym, resultDepth))
                 # otherwise just use the next symbol
                 else:
                     nextBoard[pos[0]][pos[1]] = symbol
-                    nextResult, _, _ = branch(modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
-                    score = scoreResult(nextResult, player)
+                    nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
+                    score = scoreResult(nextResult, player, resultDepth)
                     # choose the best branch to return
                     if largest == None or largest < score:
                         largest = score
-                        bestOptions = [(nextResult, pos, symbol)]
+                        bestOptions = [(nextResult, pos, symbol, resultDepth)]
                     elif largest == score:
-                        bestOptions.append((nextResult, pos, symbol))
+                        bestOptions.append((nextResult, pos, symbol, resultDepth))
 
         idx = random.randint(0,len(bestOptions)-1)
         bestResult = bestOptions[idx][0]
         bestCoord = bestOptions[idx][1]
         bestSymbol = bestOptions[idx][2]
+        bestDepth = bestOptions[idx][3]
         
-        return bestResult, bestCoord, bestSymbol
+        return bestResult, bestCoord, bestSymbol, bestDepth
     else:
-        return result, playedCoord, playedSymbol
+        return result, playedCoord, playedSymbol, depth
 
 
 #board = self.mem.getData("board")
-board = [["-","-","-"],
-        ["-","-","-"],
-        ["-","-","-"]]
+board = [["X","O","X"],
+        ["O","X","O"],
+        ["-","O","X"]]
 #player = "O" if self.mem.getData("marker") == "X" else "X"
-result, playedCoord, playedSymbol = branch([Modifiers.Wild], board, PType.P1, "X", None, None)
-print(result, playedCoord, playedSymbol)
+result, playedCoord, playedSymbol, resultDepth = branch(0, [Modifiers.Wild], board, PType.P1, "X", None, None)
+print(result, playedCoord, playedSymbol, resultDepth)
 #self.mem.insertData("robotCoords", playedCoord)
 #self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
 #self.onStopped(playedCoord)
