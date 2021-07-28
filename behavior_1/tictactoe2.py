@@ -157,7 +157,7 @@ def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
         bestOptions = []
         largest = None
         winFound = False
-        for pos in list(positions):
+        for pos in positions:
             nextBoard = copy.deepcopy(board)
             # search both X and O placements if we're playing wild
             if Modifiers.Wild in modifiers:
@@ -224,3 +224,6 @@ print(result, playedCoord, playedSymbol, resultDepth)
 #self.mem.insertData("robotCoords", playedCoord)
 #self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
 #self.onStopped(playedCoord)
+
+
+
