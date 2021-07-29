@@ -3,6 +3,7 @@ import enum
 import numpy as np
 import copy
 import random
+import pickle
 
 class PType(enum.Enum):
    P1 = 1
@@ -183,7 +184,7 @@ def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
                 if Modifiers.Wild in modifiers:
                     for sym in ["X", "O"]:
                         nextBoard[pos[0]][pos[1]] = sym
-                        nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
+                        nextResult, _, _, resultDepth, _ = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
                         score = scoreResult(nextResult, player, resultDepth)
                         # choose the best branch to return
                         if largest == None or largest < score:
@@ -194,7 +195,7 @@ def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
                 # otherwise just use the next symbol
                 else:
                     nextBoard[pos[0]][pos[1]] = symbol
-                    nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
+                    nextResult, _, _, resultDepth, _ = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
                     score = scoreResult(nextResult, player, resultDepth)
                     # choose the best branch to return
                     if largest == None or largest < score:
@@ -209,9 +210,9 @@ def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
         bestSymbol = bestOptions[idx][2]
         bestDepth = bestOptions[idx][3]
         
-        return bestResult, bestCoord, bestSymbol, bestDepth
+        return bestResult, bestCoord, bestSymbol, bestDepth, bestOptions
     else:
-        return result, playedCoord, playedSymbol, depth
+        return result, playedCoord, playedSymbol, depth, [result, playedCoord, playedSymbol, depth]
 
 
 #board = self.mem.getData("board")
@@ -219,11 +220,108 @@ board = [["X","O","X"],
         ["O","X","O"],
         ["-","O","X"]]
 #player = "O" if self.mem.getData("marker") == "X" else "X"
-result, playedCoord, playedSymbol, resultDepth = branch(0, [Modifiers.Wild], board, PType.P1, "X", None, None)
-print(result, playedCoord, playedSymbol, resultDepth)
+
+# result, playedCoord, playedSymbol, resultDepth = branch(0, [Modifiers.Wild], board, PType.P1, "X", None, None)
+# print(result, playedCoord, playedSymbol, resultDepth)
+
 #self.mem.insertData("robotCoords", playedCoord)
 #self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
 #self.onStopped(playedCoord)
 
+#avoid winning game states
+#avoid impossible game states (not for wild)
+#avoid identities
+#only go a certain depth
 
+searchBoard = [["-","-","-"],
+                ["-","-","-"],
+                ["-","-","-"]]
 
+regularDict = dict()
+reverseDict = dict()
+wildDict = dict()
+reverseWildDict = dict()
+
+def invert(boardString):
+    result = ""
+    for c in boardString:
+        result = result + "X" if c == "O" else "O"
+    return result
+
+def stringifyBoard(board):
+    result = ""
+    length = len(board)
+    for y in range(length):
+        for x in range(length):
+            result = result + board[y][x]
+    return result
+
+def search(board, depth, symbolOffset):
+    boardString = stringifyBoard(board)
+    print(boardString)
+    eval = None # just do none for now because we are only making 2 moves
+    # avoid winning game states
+    # avoid duplicates
+    if boardString != "---------":
+        if eval == None or eval == -1:
+            if boardString not in regularDict and invert(boardString) not in regularDict:
+                # only evaluate board states that are legal
+                if abs(symbolOffset) < 2:
+                    _, _, _, _, options = branch(0, [], board, PType.P1, "X", None, None)
+                    regularDict[boardString] = options
+                    print("regular done")
+
+                    _, _, _, _, options = branch(0, [Modifiers.Reverse], board, PType.P1, "X", None, None)
+                    reverseDict[boardString] = options
+                    print("reverse done")
+                
+                # in wild, all board states are legal
+                _, _, _, _, options = branch(0, [Modifiers.Wild], board, PType.P1, "X", None, None)
+                wildDict[boardString] = options
+                print("wild done")
+
+                _, _, _, _, options = branch(0, [Modifiers.Reverse, Modifiers.Wild], board, PType.P1, "X", None, None)
+                reverseWildDict[boardString] = options
+                print("reverse wild done")
+    else:
+        print("Skipping...")
+
+    # search the next positions
+    if depth < 2:
+        positions = possibilities(board)
+        nextBoard = None
+        for pos in positions:
+            for sym in ["X", "O"]:
+                nextBoard = copy.deepcopy(board)
+                nextBoard[pos[0]][pos[1]] = sym
+                search(nextBoard, depth + 1, symbolOffset + (1 if sym == "X" else -1))
+
+# search(searchBoard, 0, 0)
+
+# regularDict["---------"] = [(None, (0, 0), 'X', 9), (None, (0, 2), 'X', 9), (None, (1, 1), 'X', 9), (None, (2, 0), 'X', 9), (None, (2, 2), 'X', 9)]
+# rFile = open("regular.pkl", "wb")
+# pickle.dump(regularDict, rFile)
+# rFile.close()
+
+# reverseDict["---------"] = [(None, (1, 1), 'X', 9)]
+# rFile = open("reverse.pkl", "wb")
+# pickle.dump(reverseDict, rFile)
+# rFile.close()
+
+# wildDict["---------"] = [(PType.P1, (1, 1), 'X', 7), (PType.P1, (1, 1), 'O', 7)]
+# rFile = open("wild.pkl", "wb")
+# pickle.dump(wildDict, rFile)
+# rFile.close()
+
+# reverseWildDict["---------"] = [(None, (1, 1), 'X', 9), (None, (1, 1), 'O', 9)]
+# rFile = open("reversewild.pkl", "wb")
+# pickle.dump(reverseWildDict, rFile)
+# rFile.close()
+
+# print(regularDict)
+
+a_file = open("regular.pkl", "rb")
+output = pickle.load(a_file)
+
+print("-XX------" in output)
+print("-OO------" in output)
