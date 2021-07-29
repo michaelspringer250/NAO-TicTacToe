@@ -6921,7 +6921,7 @@ class MyClass(GeneratedClass):
 
         playedCoord = playedSymbol = None
         if numSymbols > 2:
-            _, playedCoord, playedSymbol, _ = branch(modifiers, board, PType.P1, symbol, None, None, 0)
+            _, playedCoord, playedSymbol, _ = branch(0, modifiers, board, PType.P1, symbol, None, None)
         else:
             # we assume that reverse comes before wild in the key names
             key = "regular"
