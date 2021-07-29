@@ -6921,7 +6921,7 @@ class MyClass(GeneratedClass):
 
         playedCoord = playedSymbol = None
         if numSymbols > 2:
-            _, playedCoord, playedSymbol, _ = branch(modifiers, board, PType.P1, symbol, None, None)
+            _, playedCoord, playedSymbol, _ = branch(modifiers, board, PType.P1, symbol, None, None, 0)
         else:
             # we assume that reverse comes before wild in the key names
             key = "regular"
@@ -8943,9 +8943,9 @@ class MyClass(GeneratedClass):
                 self.onGameEnd("robot")
         elif gameMode == "reversewild" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
             if turn == "human" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
-                    self.onGameEnd("robot")
-                elif turn == "robot" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
-                    self.onGameEnd("human")
+                self.onGameEnd("robot")
+            elif turn == "robot" and (self.isWinner(p, "X") or self.isWinner(p, "O")):
+                self.onGameEnd("human")
         elif self.isBoardFull(p):
             self.onGameEnd("tie")
         else:
