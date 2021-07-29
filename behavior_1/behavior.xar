@@ -6858,7 +6858,7 @@ class MyClass(GeneratedClass):
 
     def onLoad(self):
         #reverse needs for come before wild in the file names
-        self.gameStates = new dict()
+        self.gameStates = dict()
         try:
             file = open("/home/nao/gamestates/regular.pkl", "rb")
             self.gameStates["regular"] = pickle.load(file)
