@@ -6510,7 +6510,8 @@ class MyClass(GeneratedClass):
                         <bitmap>media/images/box/box-python-script.png</bitmap>
                         <script language="4">
                           <content>
-                            <![CDATA[import sys
+                            <![CDATA[import pickle
+import sys
 import enum
 from naoqi import ALProxy
 import numpy as np
@@ -6524,6 +6525,14 @@ class PType(enum.Enum):
 class Modifiers(enum.Enum):
    Wild = 1
    Reverse = 2
+
+def stringifyBoard(board):
+    result = ""
+    length = len(board)
+    for y in range(length):
+        for x in range(length):
+            result = result + board[y][x]
+    return result
 
 def yWord(y):
     if y == 0:
@@ -6634,8 +6643,20 @@ def possibilities(board):
                 l.append((i, j))
     return(l)
 
-# Score a result based on the modifiers provided
-def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
+# Score a result
+def scoreResult(result, player, depth):
+    depthInfluence = depth / 50.0
+    if result == None or result == -1:
+        return 0
+    if result == player:
+        return 1 - depthInfluence
+    else:
+        return -1 + depthInfluence
+
+# Evaluates the next move to make
+# "playedSymbol" parameter only used with wild modifier
+# "symbol" paramter only used without wild modifier
+def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
     # evaulate the result assuming the previous player made the last move
     result = evaluate(modifiers, board, PType.P1 if player == PType.P2 else PType.P2)
 
@@ -6658,25 +6679,25 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
         bestOptions = []
         largest = None
         winFound = False
-        for pos in list(positions):
+        for pos in positions:
             nextBoard = copy.deepcopy(board)
             # search both X and O placements if we're playing wild
             if Modifiers.Wild in modifiers:
                 for sym in ["X", "O"]:
                     nextBoard[pos[0]][pos[1]] = sym
                     evaluation = evaluate(modifiers, nextBoard, player)
-                    score = scoreResult(evaluation, player)
-                    if score == 1:
+                    score = scoreResult(evaluation, player, depth + 1)
+                    if score > 0:
                         winFound = True
-                        bestOptions.append((player, pos, sym))
+                        bestOptions.append((player, pos, sym, depth + 1))
             # otherwise just use the next symbol
             else:
                 nextBoard[pos[0]][pos[1]] = symbol
                 evaluation = evaluate(modifiers, nextBoard, player)
-                score = scoreResult(evaluation, player)
-                if score == 1:
+                score = scoreResult(evaluation, player, depth + 1)
+                if score > 0:
                     winFound = True
-                    bestOptions.append((player, pos, symbol))
+                    bestOptions.append((player, pos, symbol, depth + 1))
         if winFound == False:
             for pos in positions:
                 nextBoard = copy.deepcopy(board)
@@ -6684,40 +6705,63 @@ def branch(modifiers, board, player, symbol, playedCoord, playedSymbol):
                 if Modifiers.Wild in modifiers:
                     for sym in ["X", "O"]:
                         nextBoard[pos[0]][pos[1]] = sym
-                        nextResult, _, _ = branch(modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
-                        score = scoreResult(nextResult, player)
+                        nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
+                        score = scoreResult(nextResult, player, resultDepth)
                         # choose the best branch to return
                         if largest == None or largest < score:
                             largest = score
-                            bestOptions = [(nextResult, pos, sym)]
+                            bestOptions = [(nextResult, pos, sym, resultDepth)]
                         elif largest == score:
-                            bestOptions.append((nextResult, pos, sym))
+                            bestOptions.append((nextResult, pos, sym, resultDepth))
                 # otherwise just use the next symbol
                 else:
                     nextBoard[pos[0]][pos[1]] = symbol
-                    nextResult, _, _ = branch(modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
-                    score = scoreResult(nextResult, player)
+                    nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
+                    score = scoreResult(nextResult, player, resultDepth)
                     # choose the best branch to return
                     if largest == None or largest < score:
                         largest = score
-                        bestOptions = [(nextResult, pos, symbol)]
+                        bestOptions = [(nextResult, pos, symbol, resultDepth)]
                     elif largest == score:
-                        bestOptions.append((nextResult, pos, symbol))
+                        bestOptions.append((nextResult, pos, symbol, resultDepth))
 
         idx = random.randint(0,len(bestOptions)-1)
         bestResult = bestOptions[idx][0]
         bestCoord = bestOptions[idx][1]
         bestSymbol = bestOptions[idx][2]
+        bestDepth = bestOptions[idx][3]
 
-        return bestResult, bestCoord, bestSymbol
+        return bestResult, bestCoord, bestSymbol, bestDepth
     else:
-        return result, playedCoord, playedSymbol
+        return result, playedCoord, playedSymbol, depth
 
 class MyClass(GeneratedClass):
     def __init__(self):
         GeneratedClass.__init__(self)
 
     def onLoad(self):
+        #reverse needs for come before wild in the file names
+        self.gameStates = new dict()
+        try:
+            file = open("/home/nao/gamestates/regular.pkl", "rb")
+            self.gameStates["regular"] = pickle.load(file)
+            file.close()
+
+            file = open("/home/nao/gamestates/reverse.pkl", "rb")
+            self.gameStates["reverse"] = pickle.load(file)
+            file.close()
+
+            file = open("/home/nao/gamestates/wild.pkl", "rb")
+            self.gameStates["wild"] = pickle.load(file)
+            file.close()
+
+            file = open("/home/nao/gamestates/reversewild.pkl", "rb")
+            self.gameStates["reversewild"] = pickle.load(file)
+            file.close()
+        except Exception, e:
+            self.logger.info("Error when reading precalculated gamestates:")
+            self.logger.info(str(e))
+            exit(1)
         try:
             self.mem = self.session().service( "ALMemory" )
         except Exception, e:
@@ -6738,15 +6782,44 @@ class MyClass(GeneratedClass):
 
     def onInput_onStart(self):
         board = self.mem.getData("board")
+        bLength = len(board)
         symbol = "O" if self.mem.getData("marker") == "X" else "X"
         modifier = self.mem.getData("game")
+
         if modifier == "wild":
             modifiers = [Modifiers.Wild]
         elif modifier == "reverse":
             modifiers = [Modifiers.Reverse]
         else:
             modifiers = []
-        result, playedCoord, playedSymbol = branch([], board, PType.P1, symbol, None, None)
+
+        numSymbols = 0
+        for y in range(bLength):
+            for x in range(bLength):
+                if board[y][x] != "-":
+                    numSymbols = numSymbols + 1
+
+        playedCoord = playedSymbol = None
+        if numSymbols > 2:
+            _, playedCoord, playedSymbol, _ = branch(modifiers, board, PType.P1, symbol, None, None)
+        else:
+            # we assume that reverse comes before wild in the key names
+            key = "regular"
+            if len(modifiers) > 0:
+                key = ""
+                if Modifiers.Reverse in modifiers:
+                    key += "reverse"
+                if Modifiers.Wild in modifiers:
+                    key += "wild"
+            storedDict = self.gameStates[key]
+            moveOptions = storedDict[stringifyBoard(board)]
+            idx = random.randint(0,len(moveOptions)-1)
+            # index 1 and 2 hold the location and the played symbol
+            # index 0 and 3 hold the evaluation of the move and the depth that it looked at
+            result = moveOptions[idx][0]
+            playedCoord = moveOptions[idx][1]
+            playedSymbol = moveOptions[idx][2]
+
         self.mem.insertData("robotCoords", playedCoord)
         self.mem.insertData("playedSymbol", playedSymbol)
         self.logger.info(result)

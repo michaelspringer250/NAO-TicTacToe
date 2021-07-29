@@ -9,3 +9,6 @@ a_file.close()
 a_file = open("data.pkl", "rb")
 output = pickle.load(a_file)
 print(output)
+
+t1 = t2 = t3 = 1
+print(t1, t2, t3)

@@ -184,7 +184,7 @@ def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
                 if Modifiers.Wild in modifiers:
                     for sym in ["X", "O"]:
                         nextBoard[pos[0]][pos[1]] = sym
-                        nextResult, _, _, resultDepth, _ = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
+                        nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, sym)
                         score = scoreResult(nextResult, player, resultDepth)
                         # choose the best branch to return
                         if largest == None or largest < score:
@@ -195,7 +195,7 @@ def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
                 # otherwise just use the next symbol
                 else:
                     nextBoard[pos[0]][pos[1]] = symbol
-                    nextResult, _, _, resultDepth, _ = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
+                    nextResult, _, _, resultDepth = branch(depth + 1, modifiers, nextBoard, nextPlayer, nextSymbol, pos, symbol)
                     score = scoreResult(nextResult, player, resultDepth)
                     # choose the best branch to return
                     if largest == None or largest < score:
@@ -210,19 +210,19 @@ def branch(depth, modifiers, board, player, symbol, playedCoord, playedSymbol):
         bestSymbol = bestOptions[idx][2]
         bestDepth = bestOptions[idx][3]
         
-        return bestResult, bestCoord, bestSymbol, bestDepth, bestOptions
+        return bestResult, bestCoord, bestSymbol, bestDepth
     else:
-        return result, playedCoord, playedSymbol, depth, [result, playedCoord, playedSymbol, depth]
+        return result, playedCoord, playedSymbol, depth
 
 
 #board = self.mem.getData("board")
-board = [["X","O","X"],
+board = [["-","O","X"],
         ["O","X","O"],
         ["-","O","X"]]
 #player = "O" if self.mem.getData("marker") == "X" else "X"
 
-# result, playedCoord, playedSymbol, resultDepth = branch(0, [Modifiers.Wild], board, PType.P1, "X", None, None)
-# print(result, playedCoord, playedSymbol, resultDepth)
+result, playedCoord, playedSymbol, resultDepth = branch(0, [Modifiers.Wild], board, PType.P1, "X", None, None)
+print(result, playedCoord, playedSymbol, resultDepth)
 
 #self.mem.insertData("robotCoords", playedCoord)
 #self.tts.say(yWord(playedCoord[0]) + ", " + xWord(playedCoord[1]))
@@ -319,9 +319,3 @@ def search(board, depth, symbolOffset):
 # rFile.close()
 
 # print(regularDict)
-
-a_file = open("regular.pkl", "rb")
-output = pickle.load(a_file)
-
-print("-XX------" in output)
-print("-OO------" in output)
