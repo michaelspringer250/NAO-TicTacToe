@@ -6902,11 +6902,14 @@ class MyClass(GeneratedClass):
         bLength = len(board)
         symbol = "O" if self.mem.getData("marker") == "X" else "X"
         modifier = self.mem.getData("game")
+        modifiers = []
 
-        if modifier == "wild":
-            modifiers = [Modifiers.Wild]
-        elif modifier == "reverse":
+        if modifier == "reverse":
             modifiers = [Modifiers.Reverse]
+        elif modifier == "wild":
+            modifiers = [Modifiers.Wild]
+        elif modifier == "reversewild":
+            modifiers = [Modifiers.Reverse, Modifiers.Wild]
         else:
             modifiers = []
 
