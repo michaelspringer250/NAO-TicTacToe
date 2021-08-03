@@ -6900,7 +6900,10 @@ class MyClass(GeneratedClass):
     def onInput_onStart(self):
         board = self.mem.getData("board")
         bLength = len(board)
-        symbol = "O" if self.mem.getData("marker") == "X" else "X"
+        gamemode = self.mem.getData("game")
+        symbol = "X"
+        if gamemode != "wild" and gamemode != "reversewild":
+            symbol = "O" if self.mem.getData("marker") == "X" else "X"
         modifier = self.mem.getData("game")
         modifiers = []
 
@@ -8585,10 +8588,12 @@ class MyClass(GeneratedClass):
             robotCoords = self.mem.getData("robotCoords")
             playedSymbol = self.mem.getData("playedSymbol")
         expectedSymbol = None
-        if self.mem.getData("marker") == "X":
-            expectedSymbol = "O" if robotTurn == True else "X"
-        else:
-            expectedSymbol = "X" if robotTurn == True else "O"
+        gamemode = self.mem.getData("game")
+        if gamemode != "wild" and gamemode != "reversewild":
+            if self.mem.getData("marker") == "X":
+                expectedSymbol = "O" if robotTurn == True else "X"
+            else:
+                expectedSymbol = "X" if robotTurn == True else "O"
 
         newSymbols = [[None] * len(elem) for elem in oldBoard]
         newSymbolCoords = []
